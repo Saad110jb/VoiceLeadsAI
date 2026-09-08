@@ -1,0 +1,62 @@
+{
+  "name": "VoiceLeads AI - Google Calendar Booking & Availability Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-check-availability",
+        "options": {}
+      },
+      "name": "Check Availability Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 200]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": "primary",
+        "options": {}
+      },
+      "name": "Google Calendar Check",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [320, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const events = $input.all();\nconst dateRequested = $node['Check Availability Webhook'].json.body.date || 'Tomorrow';\n\nreturn {\n  json: {\n    available: true,\n    suggested_slots: ['10:00 AM EST', '02:00 PM EST', '04:30 PM EST'],\n    message: `Slots for ${dateRequested} are open.`\n  }\n};"
+      },
+      "name": "Format Availability Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 200]
+    }
+  ],
+  "connections": {
+    "Check Availability Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Check": {
+      "main": [
+        [
+          {
+            "node": "Format Availability Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

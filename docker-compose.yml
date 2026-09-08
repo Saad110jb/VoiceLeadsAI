@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: voice_leads_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ENVIRONMENT=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VAPI_API_KEY=${VAPI_API_KEY}
+      - VAPI_ASSISTANT_ID=${VAPI_ASSISTANT_ID}
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/vapi-call-complete
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - SENDER_APP_PASSWORD=${SENDER_APP_PASSWORD}
+      - NOTIFICATION_RECEIVER=${NOTIFICATION_RECEIVER}
+      - GOOGLE_SHEET_NAME=${GOOGLE_SHEET_NAME}
+    volumes:
+      - ./backend:/app
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: voice_leads_n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: always
+
+volumes:
+  n8n_data:

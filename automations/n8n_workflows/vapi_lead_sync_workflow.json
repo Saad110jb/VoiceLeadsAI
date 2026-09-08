@@ -1,0 +1,126 @@
+{
+  "name": "VoiceLeads AI - Vapi Lead Sync & Alert Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-call-complete",
+        "options": {}
+      },
+      "name": "Vapi Webhook Receiver",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "vapi-call-complete"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Lead Payload from Vapi Webhook or Backend Relay\nconst body = $json.body || $json;\n\nreturn {\n  json: {\n    lead_id: body.id || 'N/A',\n    name: body.name || 'Prospect',\n    email: body.email || 'N/A',\n    phone: body.phone || 'N/A',\n    company: body.company || 'N/A',\n    temperature: body.lead_temperature || 'WARM',\n    summary: body.summary || 'Inbound call recorded.',
+    budget: body.budget || 'N/A',\n    intent: body.intent || 'Voice Inquiry',\n    created_at: body.created_at || new Date().toISOString()\n  }\n};"
+      },
+      "name": "Extract & Format Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.temperature }}",
+              "value2": "HOT"
+            }
+          ]
+        }
+      },
+      "name": "Filter Hot Leads",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [540, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "lead_tracker",
+        "range": "Leads!A:I",
+        "mappingMode": "defineBelow",
+        "valueBypassing": "none",
+        "fieldsUi": {
+          "fieldValues": [
+            { "column": "Name", "value": "={{ $json.name }}" },
+            { "column": "Email", "value": "={{ $json.email }}" },
+            { "column": "Phone", "value": "={{ $json.phone }}" },
+            { "column": "Service", "value": "={{ $json.company || $json.intent }}" },
+            { "column": "Status", "value": "={{ $json.temperature }}" },
+            { "column": "Summary", "value": "={{ $json.summary }}" },
+            { "column": "Slot", "value": "={{ $json.timeframe || $json.startTime }}" },
+            { "column": "Recording", "value": "={{ $json.recording_url || '' }}" },
+            { "column": "Timestamp", "value": "={{ $json.created_at }}" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Append to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [780, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "ms0574203@gmail.com",
+        "toEmail": "ms0574203@gmail.com",
+        "subject": "🔥 [HOT LEAD ALERT] {{ $json.name }} - VoiceLeads AI",
+        "text": "New HOT Lead generated via Vapi Voice AI Call:\n\nName: {{ $json.name }}\nCompany: {{ $json.company }}\nEmail: {{ $json.email }}\nPhone: {{ $json.phone }}\nBudget: {{ $json.budget }}\n\nSummary:\n{{ $json.summary }}"
+      },
+      "name": "Send Email Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [780, 400]
+    }
+  ],
+  "connections": {
+    "Vapi Webhook Receiver": {
+      "main": [
+        [
+          {
+            "node": "Extract & Format Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Format Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Filter Hot Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Hot Leads": {
+      "main": [
+        [
+          {
+            "node": "Append to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {}
+}

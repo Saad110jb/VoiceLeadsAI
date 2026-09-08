@@ -1,0 +1,60 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "check_availability",
+      "description": "Checks Google Calendar availability for booking a sales demo or consultation call.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Requested date for appointment (e.g. '2026-08-20' or 'Tomorrow')"
+          },
+          "time_slot": {
+            "type": "string",
+            "description": "Optional preferred time of day (e.g. 'morning', 'afternoon', '2pm')"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Prospect timezone, default UTC"
+          }
+        },
+        "required": ["date"]
+      }
+    },
+    "async": false,
+    "server": {
+      "url": "http://localhost:8000/api/v1/vapi/webhook"
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "book_appointment",
+      "description": "Schedules a confirmed appointment slot for a qualified lead.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of prospect"
+          },
+          "email": {
+            "type": "string",
+            "description": "Prospect email address"
+          },
+          "time_slot": {
+            "type": "string",
+            "description": "Confirmed time slot (e.g. '10:00 AM EST')"
+          }
+        },
+        "required": ["name", "time_slot"]
+      }
+    },
+    "async": false,
+    "server": {
+      "url": "http://localhost:8000/api/v1/vapi/webhook"
+    }
+  }
+]
